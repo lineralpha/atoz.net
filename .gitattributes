@@ -1,0 +1,9 @@
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+*            text=auto  # ensure consistent line endings in the entire repository
+
+# OS shell scripts
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.sh        text eol=lf
