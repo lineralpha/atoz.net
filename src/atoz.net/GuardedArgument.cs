@@ -63,7 +63,7 @@ public static class GuardedArgument
             ? argument
             : throw (TException)Activator.CreateInstance(
                 typeof(TException),
-                message ?? $"Value '{argument}' does not meet requirement",
+                message ?? $"Value '{argument}' does not meet requirement.",
                 argName)!;
     }
 }

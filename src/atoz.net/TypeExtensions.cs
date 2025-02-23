@@ -58,22 +58,22 @@ public static class TypeExtensions
             type.GenericTypeArguments[0].IsPrimitiveInternal(includeEnum)
            );
 
-    private static bool IsPrimitiveInternal(this Type type, bool includeEnum = false) =>
+    private static bool IsPrimitiveInternal(this Type type, bool includeEnum = false)
         // https://learn.microsoft.com/en-us/dotnet/api/system.type.isprimitive?view=net-9.0#remarks
-        type.IsPrimitive ||
-        (includeEnum && type.IsEnum) ||
-        type switch
-        {
-            // also consider the following types as primitive types.
-            { } t when t == typeof(string) ||
-                       t == typeof(decimal) ||
-                       t == typeof(DateTime) ||
-                       t == typeof(DateTimeOffset) ||
-                       t == typeof(TimeSpan) ||
-                       t == typeof(Guid) ||
-                       t == typeof(Uri) => true,
-            _ => false
-        };
+        => type.IsPrimitive ||
+            (includeEnum && type.IsEnum) ||
+            type switch
+            {
+                // also consider the following types as primitive types.
+                { } t when t == typeof(string) ||
+                           t == typeof(decimal) ||
+                           t == typeof(DateTime) ||
+                           t == typeof(DateTimeOffset) ||
+                           t == typeof(TimeSpan) ||
+                           t == typeof(Guid) ||
+                           t == typeof(Uri) => true,
+                _ => false
+            };
 
     /// <summary>
     ///     Converts the input value to an object of type <typeparamref name="TOutput"/>
@@ -119,20 +119,47 @@ public static class TypeExtensions
             return (object?)ConvertToArray(value, outputType.GetElementType()!);
         }
 
-        if (outputType.IsGenericType)
+        // we expect the outputType implements IList, or IList<> if it is a generic type.
+        if (outputType.IsAssignableTo(typeof(ICollection)))
         {
-            Type genericTypeDef = outputType.GetGenericTypeDefinition();
-
-            if (genericTypeDef == typeof(List<>) || genericTypeDef == typeof(IList<>))
+            if (IsCompatibleListType(outputType, out Type? elementType))
             {
-                return ConvertToList(value, outputType.GenericTypeArguments[0]!);
+                return ConvertToList(value, elementType);
             }
 
             throw new InvalidCastException(
-                $"Unsupported collection type '{outputType.Name}'. Use 'List<>' or 'IList<>' instead");
+                $"Unsupported collection type '{outputType.Name}'. Use a type compatible with `IList` or `IList<>`");
         }
 
         return ConvertValue(value, outputType);
+    }
+
+    private static bool IsCompatibleListType(Type type, [NotNullWhen(true)] out Type? elementType)
+    {
+        bool result = false;
+        elementType = null;
+
+        if (type.IsAssignableTo(typeof(IList)))
+        {
+            result = true;
+            elementType = typeof(object);
+        }
+
+        if (type.IsGenericType)
+        {
+            elementType = type.GenericTypeArguments[0];
+            if (type.IsAssignableTo(typeof(IList<>).MakeGenericType(elementType)))
+            {
+                result = true;
+            }
+            else
+            {
+                result = false;
+                elementType = null;
+            }
+        }
+
+        return result;
     }
 
     private static Array ConvertToArray(string value, Type elementType)
@@ -167,7 +194,8 @@ public static class TypeExtensions
 
     private static object? ConvertValue(string value, Type targetType)
     {
-        if (targetType.IsPrimitiveIncludingExtendedAndNullables(includeEnum: true, includeNullable: true))
+        // if not one of the "primitive" types
+        if (!targetType.IsPrimitiveIncludingExtendedAndNullables(includeEnum: true, includeNullable: true))
         {
             throw new InvalidCastException($"Conversion target type '{targetType.Name}' is not supported.");
         }

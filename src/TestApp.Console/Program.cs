@@ -1,7 +1,4 @@
-﻿using System.Globalization;
-using Atoz;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Atoz;
 
 namespace TestApp.Console;
 
@@ -20,7 +17,7 @@ internal class Program
         //    System.Console.WriteLine(dt);
         //}
 
-        var color = "9".ConvertTo<Color?>();
+        var color = "1".ConvertTo<Color>();
 
         //string s = "[1, null, 3]";
         //var res = s.ConvertTo<int[]>();

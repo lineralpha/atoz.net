@@ -348,3 +348,5 @@ dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 dotnet_diagnostic.IDE0058.severity = none
 # IDE1006: Naming Styles
 # dotnet_diagnostic.IDE1006.severity = none
+# IDE0046: Convert to conditional expression
+dotnet_diagnostic.IDE0046.severity = silent
