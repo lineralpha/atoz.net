@@ -76,6 +76,53 @@ public static class TypeExtensions
             };
 
     /// <summary>
+    /// Converts a <see cref="DateTime"/> to an equivalent <see cref="DateTimeOffset"/>,
+    /// relative to specified time zone.
+    /// <para />
+    /// If the target time zone offset <paramref name="timeZoneOffset"/> is not specified, the result
+    /// is the same date and time in the time zone represented in the <paramref name="dateTime"/>.
+    /// </summary>
+    /// <param name="dateTime">The date and time as <see cref="DateTime"/> value.</param>
+    /// <param name="timeZoneOffset">The target time zone represented as time offset relative to UTC.</param>
+    /// <returns>The <see cref="DateTimeOffset"/> in the target time zone.</returns>
+    public static DateTimeOffset ToDateTimeOffset(this DateTime dateTime, TimeSpan? timeZoneOffset = default)
+    {
+        if (timeZoneOffset == default)
+        {
+            // This conversion respects the DateTime.Kind of the input dateTime.
+            return (DateTimeOffset)dateTime;
+        }
+
+        TimeSpan currentOffset =
+            dateTime.Kind == DateTimeKind.Utc
+            ? TimeSpan.Zero
+            : TimeZoneInfo.Local.GetUtcOffset(dateTime);
+
+        dateTime += timeZoneOffset!.Value - currentOffset;
+        var dt = DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified);
+        return new DateTimeOffset(dt, timeZoneOffset.Value);
+    }
+
+    /// <summary>
+    /// Converts a <see cref="DateTimeOffset"/> to an equivalent <see cref="DateTime"/>,
+    /// with the specified <see cref="DateTimeKind"/>.
+    /// </summary>
+    /// <param name="dateTime">The date and time as a <see cref="DateTimeOffset"/> value.</param>
+    /// <param name="kind">The <see cref="DateTimeKind"/> of the result <see cref="DateTime"/>.</param>
+    /// <returns>The <see cref="DateTime"/> value equivalent to the original <paramref name="dateTime"/>.</returns>
+    public static DateTime ToDateTime(this DateTimeOffset dateTime, DateTimeKind kind = DateTimeKind.Utc)
+    {
+        return
+            kind switch
+            {
+                DateTimeKind.Utc => dateTime.UtcDateTime,
+                DateTimeKind.Local => dateTime.LocalDateTime,
+                // discard the timezone offset
+                _ => dateTime.DateTime
+            };
+    }
+
+    /// <summary>
     ///     Converts the input value to an object of type <typeparamref name="TOutput"/>
     ///     and whose value is equivalent to the input value.
     /// </summary>
